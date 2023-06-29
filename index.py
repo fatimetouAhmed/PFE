@@ -9,11 +9,19 @@ from routes.etudiant import etudiant_router
 from routes.matiere import matiere_router
 from routes.etudiermat import etudiermat_router
 from routes.semestre_etudiant import semestre_etudiant_router
+from routes.surveillance import surveillance_router
 from routes.examun import examun_router
-
+from routes.historique import historique_router
+from fastapi.middleware.cors import CORSMiddleware
 app=FastAPI()
+app.add_middleware(CORSMiddleware,
+                   allow_origins=["*"],
+                   allow_credentials=True,
+                   allow_methods=["*"],
+                   allow_headers=["*"],
+                   )
 # Définir les routes pour l'ensemble d'itinéraires utilisateur
-app.include_router(user_router, prefix="/users", tags=["Utilisateurs"])
+app.include_router(user_router, prefix="", tags=["Utilisateurs"])
 
 # Définir les routes pour l'ensemble d'itinéraires etudiant
 app.include_router(etudiant_router, prefix="/etudiants", tags=["Etudiants"])
@@ -45,6 +53,11 @@ app.include_router(semestre_router, prefix="/semestres", tags=["Semestres"])
 # Définir les routes pour l'ensemble d'itinéraires examun
 app.include_router(examun_router, prefix="/examuns", tags=["Examuns"])
 
-@app.get("/")
-async def home():
-    return {"message": "Bienvenue sur l'API de gestion des utilisateurs et des salles."}
+# Définir les routes pour l'ensemble d'itinéraires surveillance
+app.include_router(surveillance_router, prefix="/surveillances", tags=["Surveillances"])
+
+# Définir les routes pour l'ensemble d'itinéraires historique
+app.include_router(historique_router, prefix="/historiques", tags=["Historiques"])
+# @app.get("/")
+# async def home():
+#     return {"message": "Bienvenue sur l'API de gestion des utilisateurs et des salles."}

@@ -3,9 +3,33 @@ from config.db import con
 from models.salle import salles
 from schemas.salle import SalleBase
 from models.examun import Salle
+from models.surveillance import Salles
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 
 salle_router=APIRouter()
+@salle_router.get("/surveillance_salle")
+async def afficher_data():
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    # Effectuer la requête pour récupérer les étudiants avec leurs matières
+    salles = session.query(Salles).options(joinedload(Salles.surveillances_salles)).all()
+
+    # Parcourir les étudiants et récupérer leurs matières associées
+    results = []
+    for salle in salles:
+        result = {
+            "nom": salle.nom,
+            "surveillances": []
+        }
+        for surveillance in salle.surveillances_salles:
+            result["surveillances"].append({
+                "user_id": surveillance.user_id,
+            })
+        results.append(result)
+
+    return results
 @salle_router.get("/matieres_salles")
 async def matieres_salles_data():
     # Créer une session

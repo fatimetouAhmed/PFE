@@ -10,7 +10,13 @@ async def read_data():
     result_proxy = con.execute(query)   
     results = []
     for row in result_proxy:
-        result = {"nom": row.nom}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+        result = {"id": row.id,
+                  "nom": row.nom,
+                   "prenom": row.prenom,
+                   "email": row.email,
+                   "pswd": row.pswd,
+                   "role": row.role,
+                  }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
     return results
@@ -22,7 +28,12 @@ async def read_data_by_id(id:int):
     result_proxy = con.execute(query)   
     results = []
     for row in result_proxy:
-        result = {"nom": row.nom}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+        result = {"id": row.id,
+                  "nom": row.nom,
+                   "prenom": row.prenom,
+                   "email": row.email,
+                   "pswd": row.pswd,
+                   "role": row.role,}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
     return results
@@ -32,14 +43,22 @@ async def read_data_by_id(id:int):
 async def write_data(user:User):
     print("nom",user.nom)
     con.execute(users.insert().values(
-        nom=user.nom
+        nom=user.nom,
+        prenom=user.prenom,
+        email=user.email,
+        pswd=user.pswd,
+        role=user.role,
         ))
     return await read_data()
 
 @user_router.put("/{id}")
 async def update_data(id:int,user:User):
     con.execute(users.update().values(
-        nom=user.nom
+        nom=user.nom,
+        prenom=user.prenom,
+        email=user.email,
+        pswd=user.pswd,
+        role=user.role,
     ).where(users.c.id==id))
     return await read_data()
 
