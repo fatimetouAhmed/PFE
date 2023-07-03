@@ -10,6 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from fastapi.security import OAuth2PasswordRequestForm
 
 import datetime
+from auth.authConfig import recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 
 #auuth
 #from fastapi import FastAPI, HTTPException, status
@@ -35,6 +36,7 @@ from routes.examun import examun_router
 from routes.historique import historique_router
 from fastapi.middleware.cors import CORSMiddleware
 from config.db import con
+from routes.historique import write_data,write_data_case_etudiant
 app=FastAPI()
 Session = sessionmaker(bind=con)
 # Create a session
@@ -124,7 +126,7 @@ def hello_world():
 
 
 @app.post('/api/predict')
-async def predict_image(file :UploadFile=File(...),user: User = Depends(check_survpermissions)):
+async def predict_image(file :UploadFile=File(...),user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
 # async def predict_image(file :UploadFile=File(...)):
     #read file upload par user
     #image = read_image(file)
@@ -132,7 +134,7 @@ async def predict_image(file :UploadFile=File(...),user: User = Depends(check_su
         image = await file.read()
         with open("image.jpg", "wb") as f:
             f.write(image)
-        result = predict_face("image.jpg")
+        result = await predict_face("image.jpg",user_id,user)
         #JSONResponse(content=result)
     #except Exception as e:
        # return {"error": str(e)}
@@ -151,7 +153,15 @@ def get_current_user_route(user: User= Depends(get_current_user)):
         "role": user.role
                  }
       return user_data
-
+@app.get("/test_his")
+async def get_test(user_id: int = Depends(recupere_userid), user: User = Depends(check_survpermissions)):
+    try:
+        result = await write_data_case_etudiant(2, user_id, user)
+        return result
+    except Exception as e:
+        # Gérer toutes les exceptions qui peuvent survenir pendant l'exécution
+        print(f"Une erreur s'est produite : {str(e)}")
+        return False
 
 if __name__== "__main__":
    uvicorn.run(app,port=8000 ,host='127.0.0.1')

@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Depends
-from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.historique import Historiques 
 from models.etudiermat import Etudiant
@@ -76,9 +76,10 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     # return con.execute(historiques.__table__.select().where(historiques.__table__.c.id==id)).fetchall()
 
 @historique_router.post("/postcasetudiant")
-async def write_data(historique: Historique,user: User = Depends(check_Adminpermissions)):
+async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
     date=datetime.now()
-    surveillant = 11
+    surveillant = user_id
+    print("Suveillance",surveillant)
     id_sal = 0
     salle = []
     matiere_examun = []
@@ -86,7 +87,7 @@ async def write_data(historique: Historique,user: User = Depends(check_Adminperm
     a = 0
     Session = sessionmaker(bind=con)
     session = Session()
-    q1 = select(column('salle_id')).select_from(surveillances).where(surveillances.c.surveillant_id == surveillant)
+    q1 = select(column('salle_id')).select_from(surveillances).where(surveillances.c.surveillant_id == surveillant and surveillances.c.date_debut<=date and surveillances.c.date_fin>=date)
     r1 = con.execute(q1)
     for row in r1:
         id_sal = row[0]
@@ -94,7 +95,7 @@ async def write_data(historique: Historique,user: User = Depends(check_Adminperm
         a = salle_id
         print(a)
 
-    q2 = session.query(examuns.c.id_mat, Salle.nom).join(examuns).filter(Salle.id == a)
+    q2 = session.query(examuns.c.id_mat, Salle.nom,examuns.c.id,examuns.c.type).join(examuns).filter(Salle.id == a and examuns.c.heure_deb<=date and examuns.c.heure_fin>=date )
     r2 = q2.all()
     for row in r2:
         mat_id = row[0]
@@ -102,60 +103,58 @@ async def write_data(historique: Historique,user: User = Depends(check_Adminperm
         result = {
             "id_sal": row[0],
             "libelle": row[1],
+            "id_exam": row[2],
+            "type": row[3],
+            
         }
         salle.append(result)
 
-    q3 = session.query(examuns.c.id_mat, examuns.c.type, Matieres.libelle).join(examuns).filter(examuns.c.id_mat == a)
+    q3 = session.query(Matieres.libelle).join(examuns).filter(examuns.c.id_mat == a)
     r3 = q3.all()
     for row in r3:
         mat_id = row[0]
         a = mat_id
         result = {
-            "id_mat": row[0],
-            "type": row[1],
-            "libelle": row[2],
+            "libelle": row[0],
         }
         matiere_examun.append(result)
         print(matiere_examun)
-
-    q4 = select(column('id_etu')).select_from(etudiermats, Matiere).where(etudiermats.c.id_mat == Matiere.id and etudiermats.c.id_mat == a)
-    r4 = con.execute(q4)
+    q4= session.query(Etudiant.id,Etudiant.nom,Etudiant.prenom).filter(Etudiant.id == id_etu )
+    r4=q4.all()
+    # q4 = select(column('id','nom','prenom')).select_from(Etudiant).where(Etudiant.id == id_etu)
+    # r4 = con.execute(q4)
     for row in r4:
-        etu_id = row[0]
-        a = etu_id
-        print(a)
 
-    q5 = session.query(Etudiant.nom, Etudiant.prenom).join(etudiermats).filter(etudiermats.c.id_etu == a)
-    r5 = q5.all()
-    for row in r5:
-        result5 = {
-            "nom": row[0],
-            "prenom": row[1],
+        result = {
+            "id_etu" :row[0],
+            "nom" : row[1],
+            "prenom" : row[2],
         }
-        etudiant.append(result5)
-        print(etudiant)
-    description = "Attention étudiant " + str(etudiant[0]["nom"]) + " " + str(etudiant[0]["prenom"]) + " n'a pas d'examen en ce moment " \
-                    "et tente d'entrer dans la salle " + str(salle[0]["libelle"]) + " pour passer l'examen " + str(matiere_examun[0]["type"]) + " dans la matière " + \
+        etudiant.append(result)
+
+
+    description = "Attention étudiant "+ str(etudiant[0]["nom"]) + " " + str(etudiant[0]["prenom"]) + " n'a pas d'examen en ce moment " \
+                    "et tente d'entrer dans la salle " + str(salle[0]["libelle"]) + " pour passer l'examen " + str(salle[0]["type"]) + " dans la matière " + \
                     str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
-    
+ 
     con.execute(Historiques.__table__.insert().values(
         description=description,
-        id_exam=historique.id_exam,
+        id_exam=salle[0]["id_exam"],
         is_read=False
     ))
     return await read_data()
 
 @historique_router.post("/")
-async def write_data(historique: Historique,user: User = Depends(check_Adminpermissions)):
+async def write_data(user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
     date=datetime.now()
-    surveillant = 11
+    surveillant = user_id
     id_sal = 0
     salle = []
     matiere_examun = []
     a = 0
     Session = sessionmaker(bind=con)
     session = Session()
-    q1 = select(column('salle_id')).select_from(surveillances).where(surveillances.c.surveillant_id == surveillant)
+    q1 = select(column('salle_id')).select_from(surveillances).where(surveillances.c.surveillant_id == surveillant and surveillances.c.date_debut<=date and surveillances.c.date_fin>=date)
     r1 = con.execute(q1)
     for row in r1:
         id_sal = row[0]
@@ -163,7 +162,7 @@ async def write_data(historique: Historique,user: User = Depends(check_Adminperm
         a = salle_id
         print(a)
 
-    q2 = session.query(examuns.c.id_mat, Salle.nom).join(examuns).filter(Salle.id == a)
+    q2 = session.query(examuns.c.id_mat, Salle.nom,examuns.c.id,examuns.c.type).join(examuns).filter(Salle.id == a and examuns.c.heure_deb<=date and examuns.c.heure_fin>=date )
     r2 = q2.all()
     for row in r2:
         mat_id = row[0]
@@ -171,29 +170,29 @@ async def write_data(historique: Historique,user: User = Depends(check_Adminperm
         result = {
             "id_sal": row[0],
             "libelle": row[1],
+            "id_exam": row[2],
+            "type": row[3],
+            
         }
         salle.append(result)
 
-    q3 = session.query(examuns.c.id_mat, examuns.c.type, Matieres.libelle).join(examuns).filter(examuns.c.id_mat == a)
+    q3 = session.query(Matieres.libelle).join(examuns).filter(examuns.c.id_mat == a)
     r3 = q3.all()
     for row in r3:
         mat_id = row[0]
         a = mat_id
         result = {
-            "id_mat": row[0],
-            "type": row[1],
-            "libelle": row[2],
+            "libelle": row[0],
         }
         matiere_examun.append(result)
         print(matiere_examun)
-
     description = "Attention, quelqu'un n'est pas reconnu par l'application, et cette personne essaie d'entrer dans " + str(salle[0]["libelle"]) +" pour passer l'examen "\
-        + str(matiere_examun[0]["type"]) + " dans la matière " + \
+        + str(salle[0]["type"]) + " dans la matière " + \
                     str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
     
     con.execute(Historiques.__table__.insert().values(
         description=description,
-        id_exam=historique.id_exam,
+        id_exam=salle[0]["id_exam"],
         is_read=False
     ))
     return await read_data()

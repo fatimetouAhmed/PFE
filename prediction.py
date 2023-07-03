@@ -9,7 +9,10 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import create_engine, Column, Integer, String ,Sequence
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from dbconfig import get_etudiant
+from dbconfig import get_etudiant ,get_infoexamun
+from routes.historique import write_data
+from fastapi import APIRouter,Depends
+from auth.authConfig import recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 
 models = [
           "VGG-Face", 
@@ -23,7 +26,7 @@ models = [
           "SFace",
             ]
 
-def predict_face(image_path):
+async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
   #  try:     
     #result = DeepFace.verify(image_path, img2_path = "image.jpg")
         results = DeepFace.find(img_path =image_path, db_path = "C:/Users/pc/Desktop/PFE/curd_fastapi/image",model_name=models[1],enforce_detection=False)
@@ -37,9 +40,11 @@ def predict_face(image_path):
           else:
             url=photo[0][0]
             print("url:",url)
-            donne=get_etudiant(url)
+            id=get_etudiant(url)
+            donne=await get_infoexamun(id)
             return donne
         except Exception as e:
+           await write_data(user_id,user)
            return {"personne n'est pas detecte"}
       
 

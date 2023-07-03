@@ -27,6 +27,10 @@ from models.semestre_etudiant import Semestres
 from models.semestre_etudiant import semestre_etudiants
 # from models.semestre_etudiant import Etudiants
 from models.examun import examuns
+from routes.historique import write_data_case_etudiant
+from fastapi import APIRouter,Depends
+from auth.authConfig import recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+
 Base = declarative_base()
 
 # Create a session factory
@@ -37,16 +41,16 @@ session = Session()
 
 
 Base.metadata.create_all(con)
-
 def get_etudiant(photo: str):
     print(photo)
     # Retrieve the student's ID after verifying the image
     etudiants = session.query(Etudiant.id).filter(Etudiant.photo == photo).all()
 
-    if not etudiants:
-        return "Étudiant non trouvé"
+   
 
     id_etu = etudiants[0][0]
+    return  id_etu
+async def get_infoexamun(id_etu:int,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
     now = datetime.datetime.now()
     print(now)
     
@@ -55,6 +59,7 @@ def get_etudiant(photo: str):
     exams = session.query(examuns.c.id).filter(and_(now >= examuns.c.heure_deb, now <= examuns.c.heure_fin, examuns.c.id_mat.in_(subquery))).all()
     
     if not exams:
+        # await write_data_case_etudiant(id_etu,user_id,user)
         return "Votre examen n'est pas à ce moment"
     else:
         return "Rentrez"

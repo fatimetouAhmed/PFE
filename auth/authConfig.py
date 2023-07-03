@@ -234,3 +234,13 @@ def recupere_user(user: User= Depends(get_current_user)):
         "role": user.role
                  }
       return user_data
+def recupere_userid(user: User = Depends(get_current_user)):
+    user_data = {
+        "id": user.id,
+        "nom": user.nom,
+        "prenom": user.prenom,
+        "email": user.email,
+        "role": user.role
+    }
+    user_id = user_data["id"]
+    return user_id
