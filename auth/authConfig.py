@@ -4,8 +4,6 @@ from sqlalchemy.orm import sessionmaker, relationship, Session
 from passlib.hash import bcrypt
 from sqlalchemy.orm import declarative_base
 from pydantic import BaseModel
-import uvicorn
-import pymysql
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError,jwt

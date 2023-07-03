@@ -1,11 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter,Depends
+from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.notification import notifications 
 from schemas.notification import Notification
 
 notification_router=APIRouter()
 @notification_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query = notifications.select()
     result_proxy = con.execute(query)   
     results = []
@@ -17,7 +18,7 @@ async def read_data():
     # return con.execute(notifications.select().fetchall())
 
 @notification_router.get("/{id}")
-async def read_data_by_id(id:int):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     query = notifications.select().where(notifications.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -30,7 +31,7 @@ async def read_data_by_id(id:int):
 
 
 @notification_router.post("/")
-async def write_data(notification:Notification):
+async def write_data(notification:Notification,user: User = Depends(check_Adminpermissions)):
 
     con.execute(notifications.insert().values(
         content=notification.content,
@@ -42,7 +43,7 @@ async def write_data(notification:Notification):
 
 
 @notification_router.put("/{id}")
-async def update_data(id:int,notification:Notification):
+async def update_data(id:int,notification:Notification,user: User = Depends(check_Adminpermissions)):
     con.execute(notifications.update().values(
         content=notification.content,
         date=notification.date,
@@ -51,6 +52,6 @@ async def update_data(id:int,notification:Notification):
     return await read_data()
 
 @notification_router.delete("/{id}")
-async def delete_data(id:int):
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(notifications.delete().where(notifications.c.id==id))
     return await read_data()

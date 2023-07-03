@@ -20,7 +20,7 @@ from sqlalchemy.orm import sessionmaker, relationship, Session
 from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from auth.authConfig import get_current_user
 
-from routes.user import user_router
+# from routes.user import user_router
 from routes.salle import salle_router
 from routes.departement import departement_router
 from routes.notification import notification_router
@@ -47,7 +47,7 @@ app.add_middleware(CORSMiddleware,
                    allow_headers=["*"],
                    )
 # Définir les routes pour l'ensemble d'itinéraires utilisateur
-app.include_router(user_router, prefix="", tags=["Utilisateurs"])
+# app.include_router(user_router, prefix="", tags=["Utilisateurs"])
 
 # Définir les routes pour l'ensemble d'itinéraires etudiant
 app.include_router(etudiant_router, prefix="/etudiants", tags=["Etudiants"])

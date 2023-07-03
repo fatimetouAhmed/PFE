@@ -1,6 +1,7 @@
 from sqlalchemy import select, join, alias
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
-from fastapi import APIRouter
+from fastapi import APIRouter,Depends
+from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.examun import examuns
 # from models.examun import Salle
@@ -11,7 +12,7 @@ from schemas.examun import Examun
 
 examun_router=APIRouter()
 @examun_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query =examuns.select()
     result_proxy = con.execute(query)   
     results = []
@@ -29,7 +30,7 @@ async def read_data():
     # return con.execute(examuns.select().fetchall())
 
 @examun_router.get("/{id}")
-async def read_data_by_id(id:int):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     query =examuns.select().where(examuns.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -47,7 +48,7 @@ async def read_data_by_id(id:int):
 
 
 @examun_router.post("/")
-async def write_data(examun:Examun):
+async def write_data(examun:Examun,user: User = Depends(check_Adminpermissions)):
 
     con.execute(examuns.insert().values(
         type=examun.type,
@@ -61,7 +62,7 @@ async def write_data(examun:Examun):
 
 
 @examun_router.put("/{id}")
-async def update_data(id:int,examun:Examun):
+async def update_data(id:int,examun:Examun,user: User = Depends(check_Adminpermissions)):
     con.execute(examuns.update().values(
         type=examun.type,
         heure_deb=examun.heure_deb,
@@ -72,6 +73,6 @@ async def update_data(id:int,examun:Examun):
     return await read_data()
 
 @examun_router.delete("/{id}")
-async def delete_data(id:int):
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(examuns.delete().where(examuns.c.id==id))
     return await read_data()

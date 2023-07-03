@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter,Depends
+from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.historique import Historiques 
 from models.etudiermat import Etudiant
@@ -18,7 +19,7 @@ from datetime import datetime
 historique_router=APIRouter()
 
 @historique_router.get("/historique_examun")
-async def historique_departement_data():
+async def historique_departement_data(user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -42,7 +43,7 @@ async def historique_departement_data():
 
     return results
 @historique_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
    
     query = Historiques.__table__.select()
     result_proxy = con.execute(query)   
@@ -58,7 +59,7 @@ async def read_data():
     # return con.execute(historiques.__table__.select().fetchall())
 
 @historique_router.get("/{id}")
-async def read_data_by_id(id:int):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
 
     query = Historiques.__table__.select().where(Historiques.__table__.c.id==id)
     result_proxy = con.execute(query)   
@@ -75,7 +76,7 @@ async def read_data_by_id(id:int):
     # return con.execute(historiques.__table__.select().where(historiques.__table__.c.id==id)).fetchall()
 
 @historique_router.post("/postcasetudiant")
-async def write_data(historique: Historique):
+async def write_data(historique: Historique,user: User = Depends(check_Adminpermissions)):
     date=datetime.now()
     surveillant = 11
     id_sal = 0
@@ -145,7 +146,7 @@ async def write_data(historique: Historique):
     return await read_data()
 
 @historique_router.post("/")
-async def write_data(historique: Historique):
+async def write_data(historique: Historique,user: User = Depends(check_Adminpermissions)):
     date=datetime.now()
     surveillant = 11
     id_sal = 0
@@ -199,7 +200,7 @@ async def write_data(historique: Historique):
 
 
 @historique_router.put("/{id}")
-async def update_data(id:int,historique:Historique):
+async def update_data(id:int,historique:Historique,user: User = Depends(check_Adminpermissions)):
     con.execute(Historiques.__table__.update().values(
         description=historique.description,
         id_exam=historique.id_exam,
@@ -208,6 +209,6 @@ async def update_data(id:int,historique:Historique):
     return await read_data()
 
 @historique_router.delete("/{id}")
-async def delete_data(id:int):
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(Historiques.__table__.delete().where(Historiques.__table__.c.id==id))
     return await read_data()

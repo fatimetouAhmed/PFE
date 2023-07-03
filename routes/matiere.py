@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter,Depends
+from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.etudiermat import Matiere
 from models.examun import Matieres
@@ -8,7 +9,7 @@ from sqlalchemy import select
 matiere_router=APIRouter()
    
 @matiere_router.get("/afficher")
-async def afficher_data():
+async def afficher_data(user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -43,7 +44,7 @@ async def afficher_data():
     return results
 
 @matiere_router.get("/matieres_salles")
-async def matieres_salles_data():
+async def matieres_salles_data(user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -69,7 +70,7 @@ async def matieres_salles_data():
 
     return results
 @matiere_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query = select(Matiere) # Utilisez select(Matiere) au lieu de select([Matiere])
     matieres = con.execute(query)
  
@@ -86,7 +87,7 @@ async def read_data():
     # return con.execute(matieres.select().fetchall())
 
 @matiere_router.get("/{id}")
-async def read_data_by_id(id:int):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     query = Matiere.__table__.select().where(Matiere.__table__.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -100,7 +101,7 @@ async def read_data_by_id(id:int):
     # return con.execute(matieres.select().where(matieres.c.id==id)).fetchall()
 
 @matiere_router.post("/")
-async def write_data(matieres:MatiereBase):
+async def write_data(matieres:MatiereBase,user: User = Depends(check_Adminpermissions)):
     # print("nom",matiere.nom)
     con.execute(Matiere.__table__.insert().values(
         libelle=matieres.libelle,
@@ -110,7 +111,7 @@ async def write_data(matieres:MatiereBase):
     return await read_data()
 
 @matiere_router.put("/{id}")
-async def update_data(id:int,matieres:MatiereBase):
+async def update_data(id:int,matieres:MatiereBase,user: User = Depends(check_Adminpermissions)):
     con.execute(Matiere.__table__.update().values(
         libelle=matieres.libelle,
         nbre_heure=matieres.nbre_heure,
@@ -119,6 +120,6 @@ async def update_data(id:int,matieres:MatiereBase):
     return await read_data()
 
 @matiere_router.delete("/{id}")
-async def delete_data(id:int):
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(Matiere.__table__.delete().where(Matiere.__table__.c.id==id))
     return await read_data()
