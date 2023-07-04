@@ -13,6 +13,7 @@ from models.surveillance import Surveillants
 from models.salle import salles
 from models.surveillance import Surveillants  
 from schemas.historique import Historique
+from models.notification import Notifications
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 from sqlalchemy import select, literal_column,column
 from datetime import datetime
@@ -32,7 +33,6 @@ async def historique_departement_data(user: User = Depends(check_Adminpermission
     for historique in historiques:
         result = {
             "description": historique.description,
-            "is_read": historique.is_read,
             "examuns": {
                 "type": historique.examuns.type,
                 "heure_deb": historique.examuns.heure_deb,
@@ -51,8 +51,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     for row in result_proxy:
         result = {
                   "description": row.description,
-                  "id_exam": row.id_exam,
-                  "is_read":row.is_read,}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+                  "id_exam": row.id_exam,}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
     return results
@@ -68,7 +67,6 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
         result = {
                   "description": row.description,
                   "id_exam": row.id_exam,
-                  "is_read":row.is_read,
                   }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
@@ -78,6 +76,7 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
 @historique_router.post("/postcasetudiant")
 async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
     date=datetime.now()
+    id_super=0
     surveillant = user_id
     print("Suveillance",surveillant)
     id_sal = 0
@@ -136,10 +135,15 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
     description = "Attention étudiant "+ str(etudiant[0]["nom"]) + " " + str(etudiant[0]["prenom"]) + " n'a pas d'examen en ce moment " \
                     "et tente d'entrer dans la salle " + str(salle[0]["libelle"]) + " pour passer l'examen " + str(salle[0]["type"]) + " dans la matière " + \
                     str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
- 
+    notification=description
     con.execute(Historiques.__table__.insert().values(
         description=description,
-        id_exam=salle[0]["id_exam"],
+        id_exam=salle[0]["id_exam"]
+    ))
+    con.execute(Notifications.__table__.insert().values(
+        content=description,
+        date=date,
+        id_sup=id_super,
         is_read=False
     ))
     return await read_data()
@@ -147,6 +151,7 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
 @historique_router.post("/")
 async def write_data(user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
     date=datetime.now()
+    id_super=0
     surveillant = user_id
     id_sal = 0
     salle = []
@@ -189,10 +194,15 @@ async def write_data(user_id: int = Depends(recupere_userid),user: User = Depend
     description = "Attention, quelqu'un n'est pas reconnu par l'application, et cette personne essaie d'entrer dans " + str(salle[0]["libelle"]) +" pour passer l'examen "\
         + str(salle[0]["type"]) + " dans la matière " + \
                     str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
-    
+
     con.execute(Historiques.__table__.insert().values(
         description=description,
-        id_exam=salle[0]["id_exam"],
+        id_exam=salle[0]["id_exam"]
+    ))
+    con.execute(Notifications.__table__.insert().values(
+        content=description,
+        date=date,
+        id_sup=id_super,
         is_read=False
     ))
     return await read_data()
@@ -203,8 +213,14 @@ async def update_data(id:int,historique:Historique,user: User = Depends(check_Ad
     con.execute(Historiques.__table__.update().values(
         description=historique.description,
         id_exam=historique.id_exam,
-        is_read=historique.is_read,
     ).where(Historiques.__table__.c.id==id))
+    return await read_data()
+
+@historique_router.put("/{id}")
+async def update_data_Notification(id:int,user: User = Depends(check_Adminpermissions)):
+    con.execute(Notifications.__table__.update().values(
+        is_read=True,
+    ).where(Notifications.__table__.c.id==id))
     return await read_data()
 
 @historique_router.delete("/{id}")
