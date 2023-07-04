@@ -55,14 +55,16 @@ class Surveillant(Base):
     #id = Column(Integer, pr
     # imary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    user = relationship("User", back_populates="surveillant", uselist=False)
+    superviseur_id = Column(Integer, ForeignKey("superviseurs.user_id"))
+
+    user= relationship("User", back_populates="surveillant", uselist=False)
     superviseur = relationship("Superviseur", back_populates="surveillant", uselist=False)
 
 class Superviseur(Base):
     __tablename__ = "superviseurs"
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    sureveillant_id = Column(Integer, ForeignKey("surveillants.user_id"))
+    #sureveillant_id = Column(Integer, ForeignKey("surveillants.user_id"))
 
     user = relationship("User", back_populates="superviseur", uselist=False)
     surveillant = relationship("Surveillant", back_populates="superviseur", uselist=False)
