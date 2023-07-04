@@ -1,8 +1,8 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status 
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship, Session
 from passlib.hash import bcrypt
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base 
 from pydantic import BaseModel
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -10,6 +10,8 @@ from jose import JWTError,jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from config.db import con
+from typing import Optional
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=con)
 # Create a session
@@ -55,14 +57,16 @@ class Surveillant(Base):
     #id = Column(Integer, pr
     # imary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    user = relationship("User", back_populates="surveillant", uselist=False)
+    superviseur_id = Column(Integer, ForeignKey("superviseurs.user_id"))
+
+    user= relationship("User", back_populates="surveillant", uselist=False)
     superviseur = relationship("Superviseur", back_populates="surveillant", uselist=False)
 
 class Superviseur(Base):
     __tablename__ = "superviseurs"
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    sureveillant_id = Column(Integer, ForeignKey("surveillants.user_id"))
+    #sureveillant_id = Column(Integer, ForeignKey("surveillants.user_id"))
 
     user = relationship("User", back_populates="superviseur", uselist=False)
     surveillant = relationship("Surveillant", back_populates="superviseur", uselist=False)
@@ -76,7 +80,7 @@ class UserCreate(BaseModel):
     email: str
     pswd: str
     role: str
-
+    superviseur_id: Optional[int] = None  # Champ superviseur_id optionnel
 
 class UserResponse(BaseModel):
     id: int
@@ -106,12 +110,13 @@ def create_user(db: Session, user: UserCreate):
         db.commit()
         db.refresh(admin)
     elif user.role == "surveillant":
-        surveillant = Surveillant(user_id=db_user.id)
+        superviseur_id = user.superviseur_id  # Récupération du superviseur_id depuis user
+        surveillant = Surveillant(user_id=db_user.id, superviseur_id=superviseur_id)  # Utilisation du superviseur_id lors de la création du surveillant
         db.add(surveillant)
         db.commit()
         db.refresh(surveillant)
     elif user.role == "superviseur":
-     superviseur = Superviseur(user_id=db_user.id, sureveillant_id=None)
+     superviseur = Superviseur(user_id=db_user.id)
      db.add(superviseur)
      db.commit()
      db.refresh(superviseur)

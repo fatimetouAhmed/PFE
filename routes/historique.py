@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Depends
-from auth.authConfig import recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import recupere_userid,create_user,Surveillant,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.historique import Historiques 
 from models.etudiermat import Etudiant
@@ -120,8 +120,7 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
         print(matiere_examun)
     q4= session.query(Etudiant.id,Etudiant.nom,Etudiant.prenom).filter(Etudiant.id == id_etu )
     r4=q4.all()
-    # q4 = select(column('id','nom','prenom')).select_from(Etudiant).where(Etudiant.id == id_etu)
-    # r4 = con.execute(q4)
+
     for row in r4:
 
         result = {
@@ -130,12 +129,17 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
             "prenom" : row[2],
         }
         etudiant.append(result)
+    q5= session.query(Surveillant.superviseur_id).filter(Surveillant.user_id == user_id )
+    r5=q5.all()
+
+    for row in r5:
+        id_super =row[0]
 
 
     description = "Attention étudiant "+ str(etudiant[0]["nom"]) + " " + str(etudiant[0]["prenom"]) + " n'a pas d'examen en ce moment " \
                     "et tente d'entrer dans la salle " + str(salle[0]["libelle"]) + " pour passer l'examen " + str(salle[0]["type"]) + " dans la matière " + \
                     str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
-    notification=description
+
     con.execute(Historiques.__table__.insert().values(
         description=description,
         id_exam=salle[0]["id_exam"]
@@ -143,10 +147,10 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
     con.execute(Notifications.__table__.insert().values(
         content=description,
         date=date,
-        id_sup=id_super,
+        superviseur_id=id_super,
         is_read=False
     ))
-    return await read_data()
+    return description
 
 @historique_router.post("/")
 async def write_data(user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
@@ -191,6 +195,13 @@ async def write_data(user_id: int = Depends(recupere_userid),user: User = Depend
         }
         matiere_examun.append(result)
         print(matiere_examun)
+    q5= session.query(Surveillant.superviseur_id).filter(Surveillant.user_id == user_id )
+    r5=q5.all()
+
+    for row in r5:
+        id_super =row[0]
+    print("supervieur",id_super)
+
     description = "Attention, quelqu'un n'est pas reconnu par l'application, et cette personne essaie d'entrer dans " + str(salle[0]["libelle"]) +" pour passer l'examen "\
         + str(salle[0]["type"]) + " dans la matière " + \
                     str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
@@ -202,10 +213,10 @@ async def write_data(user_id: int = Depends(recupere_userid),user: User = Depend
     con.execute(Notifications.__table__.insert().values(
         content=description,
         date=date,
-        id_sup=id_super,
+        superviseur_id=id_super,
         is_read=False
     ))
-    return await read_data()
+    return description
 
 
 @historique_router.put("/{id}")

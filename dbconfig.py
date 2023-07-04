@@ -61,7 +61,7 @@ async def get_infoexamun(id_etu:int,user_id: int = Depends(recupere_userid),user
     if not exams:        
                 result= await write_data_case_etudiant(id_etu, user_id, user)
                 if result:
-                 return "Votre examen n'est pas à ce moment"
+                 return result
     else:   
         return "Rentrez"
 
@@ -69,4 +69,4 @@ async def get_infoexamun(id_etu:int,user_id: int = Depends(recupere_userid),user
        # return JSONResponse(content=jsonable_encoder({'error': 'Etudiant non trouvé'}))
     
     # Return the response as a JSON
-    return JSONResponse(content=jsonable_encoder(etudiants_list))
+    # return JSONResponse(content=jsonable_encoder(etudiants_list))

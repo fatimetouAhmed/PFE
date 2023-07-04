@@ -44,8 +44,8 @@ async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: 
             donne=await get_infoexamun(id)
             return donne
         except Exception as e:
-          #  await write_data(user_id,user)
-           return {"personne n'est pas detecte"}
+           result=await write_data(user_id,user)
+           return result
       
 
       #  except Exception as e:

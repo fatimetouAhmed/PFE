@@ -10,14 +10,15 @@ class Notifications(Base):
     id = Column(Integer, primary_key=True)
     content = Column(String(255))
     date = Column(DATETIME,default=datetime.now)
-    id_sup = Column(Integer, ForeignKey('superviseurs.user_id'))
+    superviseur_id = Column(Integer, ForeignKey('superviseurs.user_id'))
     is_read = Column(Boolean)
-    superviseurs = relationship("Superviseurs", primaryjoin="Notifications.id_sup == Superviseurs.user_id")
+    superviseurs = relationship("Superviseurs", primaryjoin="Notifications.superviseur_id == Superviseurs.user_id")
     superviseurs = relationship("Superviseurs")
     
 class Superviseurs(Base):
     __tablename__ = 'superviseurs'
 
     user_id = Column(Integer, primary_key=True)
+    
 
     

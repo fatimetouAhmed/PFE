@@ -9,7 +9,6 @@ class Historiques(Base):
     id = Column(Integer, primary_key=True)
     description = Column(String(255))
     id_exam = Column(Integer, ForeignKey('examuns.id'))
-    is_read = Column(Boolean)
     examuns = relationship("Examuns", primaryjoin="Historiques.id_exam == Examuns.id")
     examuns = relationship("Examuns")
     

@@ -24,7 +24,7 @@ from auth.authConfig import get_current_user
 # from routes.user import user_router
 from routes.salle import salle_router
 from routes.departement import departement_router
-from routes.notification import notification_router
+# from routes.notification import notification_router
 from routes.filiere import filiere_router
 from routes.semestre import semestre_router
 from routes.etudiant import etudiant_router
@@ -70,7 +70,7 @@ app.include_router(etudiermat_router, prefix="/etudiermatiere", tags=["etudierma
 app.include_router(departement_router, prefix="/departements", tags=["Departemens"])
 
 # Définir les routes pour l'ensemble d'itinéraires notification
-app.include_router(notification_router, prefix="/notifications", tags=["Notifications"])
+# app.include_router(notification_router, prefix="/notifications", tags=["Notifications"])
 
 # Définir les routes pour l'ensemble d'itinéraires filiere
 app.include_router(filiere_router, prefix="/filieres", tags=["Filieres"])
