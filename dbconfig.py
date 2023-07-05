@@ -57,11 +57,12 @@ async def get_infoexamun(id_etu:int,user_id: int = Depends(recupere_userid),user
     # Check if the student has an exam at this moment
     subquery = session.query(etudiermats.c.id_mat).filter(etudiermats.c.id_etu == id_etu)
     exams = session.query(examuns.c.id).filter(and_(now >= examuns.c.heure_deb, now <= examuns.c.heure_fin, examuns.c.id_mat.in_(subquery))).all()
-    print("etudiant",id_etu)
+   # print("etudiant",id_etu)
     if not exams:        
-                result= await write_data_case_etudiant(id_etu, user_id, user)
-                if result:
-                 return result
+                #result= await write_data_case_etudiant(id_etu, user_id, user)
+                #if result:
+                 print("etudiant34",id_etu)
+                 return await write_data_case_etudiant(id_etu, user_id, user)
     else:   
         return "Rentrez"
 

@@ -156,7 +156,7 @@ def get_current_user_route(user: User= Depends(get_current_user)):
 @app.get("/test_his")
 async def get_test(user_id: int = Depends(recupere_userid), user: User = Depends(check_survpermissions)):
     try:
-        result = await write_data_case_etudiant(2, user_id, user)
+        result = await write_data_case_etudiant(3, user_id, user)
         return result
     except Exception as e:
         # Gérer toutes les exceptions qui peuvent survenir pendant l'exécution
